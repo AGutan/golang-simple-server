@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
@@ -21,10 +22,15 @@ func main() {
 	// GET /todo
 	router.HandleFunc("/todo", getTodos).Methods(http.MethodGet)
 
+	// CORS
+	headersOK := handlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type"})
+	originsOK := handlers.AllowedOrigins([]string{"*"})
+	methodsOK := handlers.AllowedMethods([]string{"GET", "POST", "OPTIONS", "DELETE", "PUT"})
+
 	// setup http server
 	srv := &http.Server{
 		Addr:    fmt.Sprintf(":%d", 8080),
-		Handler: router,
+		Handler: handlers.CORS(headersOK, originsOK, methodsOK)(router),
 	}
 
 	err := srv.ListenAndServe()
