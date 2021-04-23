@@ -21,6 +21,8 @@ func main() {
 	router.HandleFunc("/todo", newTodo).Methods(http.MethodPost)
 	// GET /todo
 	router.HandleFunc("/todo", getTodos).Methods(http.MethodGet)
+	// PUT /todo/complete
+	router.HandleFunc("/todo/complete", completeTodo).Methods(http.MethodPut)
 
 	// CORS
 	headersOK := handlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type"})
@@ -44,6 +46,33 @@ func getTodos(w http.ResponseWriter, req *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
 	err := json.NewEncoder(w).Encode(todos)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+func completeTodo(w http.ResponseWriter, req *http.Request) {
+	var todo Todo
+	err := json.NewDecoder(req.Body).Decode(&todo)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	i := 0
+	newTodos := make([]*Todo, len(todos))
+	for _, t := range todos {
+		if t.Todo != todo.Todo {
+			newTodos[i] = t
+			i++
+		}
+	}
+	todos = newTodos[:i]
+
+	// write success response
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	err = json.NewEncoder(w).Encode(todos)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
